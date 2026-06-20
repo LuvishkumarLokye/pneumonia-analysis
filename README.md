@@ -35,7 +35,6 @@ pneumonia_prediction/
 |-- templates/
 |   `-- dashboard.html
 |-- Test sample images/
-|-- Linkedin/
 `-- README.md
 ```
 
