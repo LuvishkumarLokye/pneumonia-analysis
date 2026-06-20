@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulmoSight Pro — Clinical Decision Support System</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        :root {
+            --bg-app: #090b0f;
+            --bg-card: #11141a;
+            --bg-card-hover: #151922;
+            --border: #202632;
+            --border-focus: #3b82f6;
+            
+            --brand: #2563eb;
+            --brand-light: #60a5fa;
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --success: #10b981;
+            --success-surface: rgba(16, 185, 129, 0.08);
+            --danger: #ef4444;
+            --danger-surface: rgba(239, 68, 68, 0.08);
+            --warning: #f59e0b;
+            
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            letter-spacing: -0.01em;
+        }
+
+        /* App Wrapper Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation Component */
+        aside {
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-logo {
+            background: var(--brand);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: grid;
+            place-items: center;
+        }
+
+        .brand-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .brand-title span {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        .nav-group {
+            margin-top: 32px;
+            flex-grow: 1;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            border-left: 2px solid var(--brand);
+            border-radius: 0 6px 6px 0;
+            background-color: rgba(37, 99, 235, 0.05);
+            color: var(--brand-light);
+        }
+
+        .system-pill {
+            background-color: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--success);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--success);
+        }
+
+        /* Main Workspace Structure */
+        main {
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .view-header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 24px;
+        }
+
+        .view-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .view-title p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .meta-timestamp {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Workspace Cards */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card-header-inner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* File Upload Dropzone Component */
+        .dropzone-container {
+            border: 1px dashed var(--border);
+            background-color: rgba(255, 255, 255, 0.01);
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .dropzone-container:hover {
+            border-color: var(--border-focus);
+            background-color: rgba(37, 99, 235, 0.02);
+        }
+
+        .dropzone-container input[type="file"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .dropzone-icon {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .dropzone-text p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .dropzone-text p span {
+            color: var(--brand-light);
+            font-weight: 500;
+        }
+
+        .dropzone-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons */
+        .btn {
+            background-color: var(--brand);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn:disabled {
+            background-color: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Diagnostic Results Sidebar Layout */
+        .results-panel {
+            display: none;
+        }
+
+        .result-box {
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .result-box.normal {
+            background-color: var(--success-surface);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .result-box.pneumonia {
+            background-color: var(--danger-surface);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .result-meta-tag {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        
+        .normal .result-meta-tag { color: var(--success); }
+        .pneumonia .result-meta-tag { color: var(--danger); }
+
+        .result-heading {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 12px;
+        }
+
+        /* Probability Bars */
+        .metric-row {
+            margin-bottom: 16px;
+        }
+
+        .metric-label-group {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .metric-name { color: var(--text-secondary); }
+        .metric-value { font-family: var(--font-mono); font-weight: 500; }
+
+        .progress-bar-rail {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* FIX: Changed selectors to look at the results-panel container status */
+        .results-panel.normal .progress-bar-fill.primary-fill { background-color: var(--success); }
+        .results-panel.pneumonia .progress-bar-fill.primary-fill { background-color: var(--danger); }
+        .progress-bar-fill.secondary-fill { background-color: var(--text-muted); }
+
+        /* Clinical Guidelines Card */
+        .clinical-guidelines {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .guideline-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .guideline-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Micro Loader Animation */
+        .loader-wrapper {
+            display: none;
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--brand-light);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Document/Image Preview Mode */
+        .preview-wrapper {
+            margin-top: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            display: none;
+            max-height: 300px;
+            background-color: #000;
+        }
+
+        .preview-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <aside>
+            <div>
+                <div class="brand-wrapper">
+                    <div class="brand-logo"><i data-lucide="activity" style="width:16px; height:16px;"></i></div>
+                    <div class="brand-title">PulmoSight<span>v4.1</span></div>
+                </div>
+                
+                <div class="nav-group">
+                    <div class="nav-label">Analysis Pipeline</div>
+                    <a href="#" class="nav-item active"><i data-lucide="upload-cloud" style="width:16px; height:16px;"></i> DICOM / Image Upload</a>
+                    <a href="#" class="nav-item"><i data-lucide="history" style="width:16px; height:16px;"></i> Patient Logs</a>
+                    <a href="#" class="nav-item"><i data-lucide="sliders" style="width:16px; height:16px;"></i> Model Thresholds</a>
+                </div>
+            </div>
+
+            <div class="system-pill">
+                <span class="status-indicator"></span>
+                <span>CUDA_NODE_0: READY</span>
+            </div>
+        </aside>
+
+        <main>
+            <div class="view-header">
+                <div class="view-title">
+                    <h1>Radiographic Screening Interface</h1>
+                    <p>AI-assisted screening tool to help identify patterns in chest X-rays.</p>
+                </div>
+                <div class="meta-timestamp" id="liveTimestamp">---</div>
+            </div>
+
+            <div class="workspace-grid">
+                <div class="card">
+                    <div class="card-header-inner">
+                        <i data-lucide="file-text" style="width:18px; height:18px;"></i>
+                        <span>Upload Chest X-Ray</span>
+                    </div>
+
+                    <form id="analysisUploadForm">
+                        <div class="dropzone-container" id="dropzoneBox">
+                            <input type="file" name="image" id="fileInput" accept="image/jpeg, image/png" required>
+                            <div id="dropzoneDefaultUI">
+                                <div class="dropzone-icon"><i data-lucide="file-plus-2" style="width:32px; height:32px;"></i></div>
+                                <div class="dropzone-text">
+                                    <p>Select a chest radiograph or <span>drag and drop a file here</span></p>
+                                </div>
+                                <div class="dropzone-hint">Supports high-resolution PNG and JPEG formats</div>
+                            </div>
+                        </div>
+                        
+                        <div class="preview-wrapper" id="imagePreviewContainer">
+                            <img src="" id="imagePreviewTarget" alt="Staged radiograph view">
+                        </div>
+
+                        <button type="submit" class="btn" id="submitBtn" disabled>
+                            <i data-lucide="play" style="width:16px; height:16px;"></i> Run Diagnostic Evaluation
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-inner">
+                        <i data-lucide="bar-chart-3" style="width:18px; height:18px;"></i>
+                        <span>Model Inference Metrics</span>
+                    </div>
+
+                    <div class="loader-wrapper" id="analysisLoader">
+                        <div class="spinner"></div>
+                        <p style="font-size: 13px;">Analyzing image patterns...</p>
+                    </div>
+
+                    <div id="idleStateContainer" style="color: var(--text-muted); padding: 40px 0; text-align: center;">
+                        <i data-lucide="binary" style="width:24px; height:24px; margin-bottom:12px; opacity:0.5;"></i>
+                        <p style="font-size:13px;">Awaiting image upload to generate findings.</p>
+                    </div>
+
+                    <div class="results-panel" id="resultsPanelWrapper">
+                        <div id="dynamicClassificationOutcomeBox"></div>
+                        
+                        <div class="metric-row">
+                            <div class="metric-label-group">
+                                <span class="metric-name">Pneumonic Consolidation Probability</span>
+                                <span class="metric-value" id="valPneuText">0%</span>
+                            </div>
+                            <div class="progress-bar-rail">
+                                <div class="progress-bar-fill primary-fill" id="barPneuFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="metric-row">
+                            <div class="metric-label-group">
+                                <span class="metric-name">Uncompromised Parenchyma Index</span>
+                                <span class="metric-value" id="valNormText">0%</span>
+                            </div>
+                            <div class="progress-bar-rail">
+                                <div class="progress-bar-fill secondary-fill" id="barNormFill"></div>
+                            </div>
+                        </div>
+
+                        <div class="clinical-guidelines">
+                            <div class="guideline-title">
+                                <i data-lucide="shield-alert" style="width:14px; height:14px; color: var(--warning)"></i>
+                                <span>Clinical Advisory Warning</span>
+                            </div>
+                            <div class="guideline-text">
+                                Model classifications are secondary screening approximations. Validation must be verified by a board-certified radiologist alongside localized clinical presentation profiles.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function updateClock() {
+            const now = new Date();
+            const pad = num => String(num).padStart(2, '0');
+            $('#liveTimestamp').text(`${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} UTC`);
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        $('#fileInput').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    $('#imagePreviewTarget').attr('src', event.target.result);
+                    $('#imagePreviewContainer').show();
+                    $('#dropzoneDefaultUI').hide();
+                    $('#dropzoneBox').css('padding', '12px');
+                    $('#submitBtn').removeAttr('disabled');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $('#analysisUploadForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('image', $('#fileInput')[0].files[0]);
+
+            $('#submitBtn').attr('disabled', true);
+            $('#idleStateContainer').hide();
+            $('#resultsPanelWrapper').hide();
+            $('#analysisLoader').show();
+
+            $.ajax({
+                url: '/predict',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    const isInfected = response.prediction.toUpperCase() === 'PNEUMONIA';
+                    const classContextStyle = isInfected ? 'pneumonia' : 'normal';
+                    
+                    $('#dynamicClassificationOutcomeBox').html(`
+                        <div class="result-box ${classContextStyle}">
+                            <div class="result-meta-tag">Screening Classification</div>
+                            <div class="result-heading">${response.prediction} IDENTIFIED</div>
+                            <div style="font-size: 13px; opacity: 0.85;">
+                                Weights verified at ${response.confidence}% operational confidence interval.
+                            </div>
+                        </div>
+                    `);
+
+                    $('#valPneuText').text(response.prob_pneumonia + '%');
+                    $('#valNormText').text(response.prob_normal + '%');
+                    
+                    $('#analysisLoader').hide();
+                    
+                    /* FIX: Explicitly add state class to the parent wrapper so the progress bars look at it */
+                    $('#resultsPanelWrapper').removeClass('pneumonia normal').addClass(classContextStyle).show();
+
+                    setTimeout(() => {
+                        $('#barPneuFill').css('width', response.prob_pneumonia + '%');
+                        $('#barNormFill').css('width', response.prob_normal + '%');
+                    }, 50);
+                },
+                error: function() {
+                    $('#analysisLoader').hide();
+                    $('#idleStateContainer').show().html(`
+                        <i data-lucide="alert-triangle" style="width:24px; height:24px; color:var(--danger); margin-bottom:12px;"></i>
+                        <p style="font-size:13px; color: var(--danger)">Connection lost. Please try uploading the image again.</p>
+                    `);
+                    lucide.createIcons();
+                },
+                complete: function() {
+                    $('#submitBtn').removeAttr('disabled');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
