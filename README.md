@@ -161,22 +161,3 @@ best_pneumonia_model.pth
 
 The Flask app loads this file automatically on startup.
 
-## GitHub Note
-
-The included `best_pneumonia_model.pth` file is larger than GitHub's standard 100 MB file limit. If you publish this project to GitHub, use one of these options:
-
-- Store the model with Git LFS
-- Upload the model file as a GitHub Release asset
-- Provide a download link and keep the model out of the repository
-
-## Future Improvements
-
-- Add `requirements.txt` for one-command dependency installation
-- Add model evaluation metrics such as confusion matrix, precision, recall, and F1-score
-- Add Grad-CAM heatmaps for visual explanation
-- Add automated tests for the Flask prediction endpoint
-- Add Docker support for easier deployment
-
-## License
-
-Add a license before publishing this repository if you want others to use or contribute to the project.
